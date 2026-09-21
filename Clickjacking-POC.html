@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clickjacking Frameability Test</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2 {
+      margin: 0 0 4px;
+    }
+
+    p {
+      margin: 4px 0;
+      color: #333;
+    }
+
+    code {
+      overflow-wrap: anywhere;
+    }
+
+    .error {
+      color: #b00020;
+      font-weight: bold;
+    }
+
+    .frame-wrap {
+      position: relative;
+      width: min(1000px, 100%);
+      height: 600px;
+      margin-top: 16px;
+      border: 2px solid #c00;
+      box-sizing: border-box;
+    }
+
+    .fallback {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+      color: #888;
+      font-size: 18px;
+      z-index: 1;
+      box-sizing: border-box;
+    }
+
+    iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      z-index: 2;
+      background: transparent;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Clickjacking frameability test</h2>
+
+  <p>
+    <strong>Target:</strong>
+    <code id="targetDisplay">No target supplied</code>
+  </p>
+
+  <p>
+    If the target site renders inside the red box below, it can be framed
+    &rarr; <strong>clickjacking may be possible</strong>.
+  </p>
+
+  <p>
+    If the box stays blank, framing may be blocked by
+    <strong>X-Frame-Options</strong> or CSP <strong>frame-ancestors</strong>.
+  </p>
+
+  <p id="errorMessage" class="error" hidden></p>
+
+  <div class="frame-wrap">
+    <div class="fallback">
+      Frame is blank. The target may have refused to load because
+      X-Frame-Options or CSP frame-ancestors is in place.
+    </div>
+
+    <iframe
+      id="testFrame"
+      title="Target website frameability test"
+      referrerpolicy="no-referrer"
+    ></iframe>
+  </div>
+
+  <script>
+    (() => {
+      const params = new URLSearchParams(window.location.search);
+      const rawTarget = params.get("target");
+
+      const targetDisplay = document.getElementById("targetDisplay");
+      const testFrame = document.getElementById("testFrame");
+      const errorMessage = document.getElementById("errorMessage");
+
+      if (!rawTarget) {
+        errorMessage.hidden = false;
+        errorMessage.textContent =
+          "No target supplied. Use ?target=https://example.com";
+        return;
+      }
+
+      let targetUrl;
+
+      try {
+        targetUrl = new URL(rawTarget);
+      } catch {
+        errorMessage.hidden = false;
+        errorMessage.textContent =
+          "Invalid target URL. Include the full address, such as https://example.com";
+        return;
+      }
+
+      if (!["http:", "https:"].includes(targetUrl.protocol)) {
+        errorMessage.hidden = false;
+        errorMessage.textContent =
+          "Only http:// and https:// target URLs are supported.";
+        return;
+      }
+
+      targetDisplay.textContent = targetUrl.href;
+      testFrame.src = targetUrl.href;
+    })();
+  </script>
+</body>
+</html>
